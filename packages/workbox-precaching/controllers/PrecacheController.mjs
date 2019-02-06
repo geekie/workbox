@@ -172,6 +172,7 @@ class PrecacheController {
     // https://github.com/GoogleChrome/workbox/issues/1368
     const tempCache = await caches.open(this._getTempCacheName());
     const requests = await tempCache.keys();
+
     await Promise.all(requests.map((request) => {
       return tempCache.delete(request);
     }));
@@ -191,6 +192,14 @@ class PrecacheController {
     // Wait for all requests to be cached.
     await Promise.all(entriesToPrecache.map((precacheEntry) => {
       return this._cacheEntryInTemp({event, plugins, precacheEntry});
+    }));
+
+    // Only update the precache details model if all requests succeed.
+    // Otherwise, if this installation attempt fails half way though, the next
+    // attempt won't download some of the assets since the precache details
+    // model will have them marked as "already downloaded"
+    await Promise.all(entriesToPrecache.map((precacheEntry) => {
+      return this._precacheDetailsModel._addEntry(precacheEntry);
     }));
 
     if (process.env.NODE_ENV !== 'production') {
@@ -280,8 +289,6 @@ class PrecacheController {
       event,
       plugins,
     });
-
-    await this._precacheDetailsModel._addEntry(precacheEntry);
 
     return true;
   }
