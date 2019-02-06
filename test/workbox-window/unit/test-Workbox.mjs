@@ -6,7 +6,9 @@
   https://opensource.org/licenses/MIT.
 */
 
-import {Workbox} from '/__WORKBOX/buildFile/workbox-window';
+// import {Workbox} from '/__WORKBOX/buildFile/workbox-window';
+
+import {Workbox} from 'workbox-window/Workbox.mjs';
 
 
 const isDev = () => {

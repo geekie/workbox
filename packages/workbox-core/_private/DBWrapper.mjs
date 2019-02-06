@@ -77,7 +77,12 @@ export class DBWrapper {
         }
       };
       openRequest.onsuccess = ({target}) => {
+        console.log('DONE OPENNING!')
         const db = target.result;
+        db.onclose = () => {
+          console.log('ONCLOSE!');
+        }
+
         if (openRequestTimedOut) {
           db.close();
         } else {
@@ -194,9 +199,14 @@ export class DBWrapper {
   async transaction(storeNames, type, callback) {
     await this.open();
     return await new Promise((resolve, reject) => {
+      console.log('TRANSACTION STARTING')
+
       const txn = this._db.transaction(storeNames, type);
       txn.onabort = ({target}) => reject(target.error);
-      txn.oncomplete = () => resolve();
+      txn.oncomplete = () => {
+        console.log('DONE WITH TRANSACTION');
+        resolve();
+      }
 
       callback(txn, (value) => resolve(value));
     });
@@ -214,6 +224,7 @@ export class DBWrapper {
   async _call(method, storeName, type, ...args) {
     const callback = (txn, done) => {
       txn.objectStore(storeName)[method](...args).onsuccess = ({target}) => {
+        console.log('DONE WITH TRANSACTION');
         done(target.result);
       };
     };
@@ -241,6 +252,7 @@ export class DBWrapper {
    * blocked by the current, open connection.
    */
   close() {
+    console.log('CLOSING!')
     if (this._db) this._db.close();
   }
 }

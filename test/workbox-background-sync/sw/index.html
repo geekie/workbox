@@ -20,6 +20,16 @@
 </head>
 <body>
   <p>You need to manually register a service worker</p>
-  <script type="module" src="./index.mjs"></script>
+  <script type="module">
+    // import {Workbox} from '/packages/workbox-window/Workbox.mjs';
+    import {Workbox} from '/__WORKBOX/buildFile/workbox-window';
+
+
+    // Expose on the global object so it can be referenced by webdriver.
+    self.Workbox = Workbox;
+
+    const wb = new Workbox('./sw-tests.js?v=' + Math.random());
+    wb.register();
+  </script>
 </body>
 </html>

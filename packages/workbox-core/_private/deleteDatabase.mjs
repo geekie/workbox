@@ -19,6 +19,7 @@ import '../_version.mjs';
  * @private
  */
 export const deleteDatabase = async (name) => {
+  console.log('deleting database...');
   await new Promise((resolve, reject) => {
     const request = indexedDB.deleteDatabase(name);
     request.onerror = ({target}) => {
@@ -28,6 +29,7 @@ export const deleteDatabase = async (name) => {
       reject(new Error('Delete blocked'));
     };
     request.onsuccess = () => {
+      console.log('database deleted!');
       resolve();
     };
   });

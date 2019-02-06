@@ -13,6 +13,8 @@ const path = require('path');
 const requireDir = require('require-dir');
 const serveIndex = require('serve-index');
 
+const {babelCompile} = require('polyserve/lib/compile-middleware');
+
 const logHelper = require('../../utils/log-helper');
 const RequestCounter = require('./request-counter');
 
@@ -24,6 +26,18 @@ let server;
 
 function initApp() {
   app = express();
+
+  console.log(path.resolve(__dirname, '..', '..', '..'));
+
+  // Allow bare module specifiers to be imported.
+  app.use('*.mjs', babelCompile(
+    'auto', // compile
+    'node', // moduleResolution
+    path.resolve(__dirname, '..', '..', '..'), // rootDir
+    'workbox', // packageName
+    '.', // componentUrl
+    '.' // componentDir
+  ));
 
   // Configure nunjucks to work with express routes.
   nunjucks.configure(path.join(__dirname, 'templates'), {express: app});

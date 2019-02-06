@@ -12,7 +12,7 @@
   <title>Workbox Unit Tests</title>
 
   <!-- Needed when locally running the module versions. -->
-  <script>self.process = self.process || {env: {NODE_ENV: 'production'}};</script>
+  <script>self.process = self.process || {env: {NODE_ENV: 'dev'}};</script>
 
   <link href="/node_modules/mocha/mocha.css" rel="stylesheet">
   <script src="/node_modules/mocha/mocha.js"></script>
@@ -28,9 +28,35 @@
 
   // Expose chai's expect globally.
   self.expect = chai.expect;
-  </script>
 
-  <script type="module" src="../unit/test-Workbox.mjs"></script>
+
+  self.expectError = async (func, errorName, finalCb) => {
+    let caughtError = null;
+    try {
+      const result = func();
+      if (result && result instanceof Promise) {
+        await result;
+      }
+    } catch (err) {
+      caughtError = err;
+    }
+
+    if (!caughtError) {
+      throw new Error('Expected error to be thrown but function ran correctly.');
+    }
+
+    if (caughtError.constructor.name !== 'WorkboxError') {
+      console.warn(`Unexpected error thrown.`, caughtError);
+    }
+
+    expect(caughtError.constructor.name).to.equal('WorkboxError');
+    expect(caughtError.name).to.equal(errorName);
+
+    if (finalCb) {
+      return finalCb(caughtError);
+    }
+  };
+  </script>
 
   <script>
   addEventListener('load', () => {
@@ -43,6 +69,8 @@
     });
 
     runner.on('fail', (test, err) => {
+      console.error(err.stack);
+
       const flattenTitles = (test) => {
         const titles = [test.title];
         while (test.parent.title){
@@ -61,5 +89,9 @@
     });
   }, {once: true});
   </script>
+
+  <script type="module" src="test-Queue.mjs"></script>
+  <script type="module" src="test-QueueStore.mjs"></script>
+  <script type="module" src="test-StorableRequest.mjs"></script>
 </body>
 </html>
