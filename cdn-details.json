@@ -1,5 +1,5 @@
 {
-  "origin": "https://storage.googleapis.com",
+  "origin": "https://d1nhcfqdcswt4e.cloudfront.net",
   "bucketName": "workbox-cdn",
-  "releasesDir": "releases"
+  "releasesDir": "geekie-releases"
 }
