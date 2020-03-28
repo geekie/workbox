@@ -137,6 +137,14 @@ class PrecacheController {
     }
   }
 
+  _geekieInstallationStatus(statusToReport) {
+    clients.matchAll({includeUncontrolled: true}).then((clients) => {
+      clients.forEach((client) => {
+        client.postMessage(Object.assign({type: 'geekieInstallationStatus'}, statusToReport));
+      });
+    });
+  }
+
   /**
    * Call this method from a service work install event to start
    * precaching assets.
@@ -164,6 +172,8 @@ class PrecacheController {
       }
     }
 
+    this._geekieInstallationStatus({message: 'Preparando instalação...'});
+
     // Empty the temporary cache.
     // NOTE: We remove all entries instead of deleting the cache as the cache
     // may be marked for deletion but still exist until a later stage
@@ -177,6 +187,8 @@ class PrecacheController {
       return tempCache.delete(request);
     }));
 
+    this._geekieInstallationStatus({message: 'Iniciando instalação...'});
+
     const entriesToPrecache = [];
     const entriesAlreadyPrecached = [];
 
@@ -189,9 +201,26 @@ class PrecacheController {
       }
     }
 
+    this._geekieInstallationStatus({
+      message: `Baixando arquivos (0/${entriesToPrecache.length})`,
+      downloadedAssets: [],
+      assetsToDownload: entriesToPrecache.map((e) => e._entryId),
+      unchangedAssets: entriesAlreadyPrecached.map((e) => e._entryId),
+    });
+    let downloadedFiles = [];
+
     // Wait for all requests to be cached.
     await Promise.all(entriesToPrecache.map((precacheEntry) => {
-      return this._cacheEntryInTemp({event, plugins, precacheEntry});
+      return this._cacheEntryInTemp({event, plugins, precacheEntry}).then((result) => {
+        downloadedFiles.push(precacheEntry);
+        this._geekieInstallationStatus({
+          message: `Baixando arquivos (${downloadedFiles.length}/${entriesToPrecache.length})`,
+          downloadedAssets: downloadedFiles.map((e) => e._entryId),
+          assetsToDownload: entriesToPrecache.map((e) => e._entryId),
+          unchangedAssets: entriesAlreadyPrecached.map((e) => e._entryId),
+        });
+        return result;
+      });
     }));
 
     // Only update the precache details model if all requests succeed.
@@ -201,6 +230,8 @@ class PrecacheController {
     await Promise.all(entriesToPrecache.map((precacheEntry) => {
       return this._precacheDetailsModel._addEntry(precacheEntry);
     }));
+
+    this._geekieInstallationStatus({message: 'Arquivos baixados...'});
 
     if (process.env.NODE_ENV !== 'production') {
       printInstallDetails(entriesToPrecache, entriesAlreadyPrecached);
